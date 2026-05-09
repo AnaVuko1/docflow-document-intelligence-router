@@ -1,0 +1,749 @@
+{% extends "base.html" %}
+
+{% block title %}Documents{% endblock %}
+{% block subtitle %}Upload, manage, and process documents{% endblock %}
+
+{% block header_actions %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+    <i class="fas fa-upload me-2"></i>Upload Document
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Documents</h6>
+                <div class="d-flex">
+                    <input type="text" class="form-control form-control-sm me-2" id="searchDocuments" 
+                           placeholder="Search documents...">
+                    <select class="form-select form-select-sm me-2" id="filterType" style="width: auto;">
+                        <option value="all">All Types</option>
+                        <option value="invoice">Invoice</option>
+                        <option value="receipt">Receipt</option>
+                        <option value="contract">Contract</option>
+                        <option value="generic">Generic</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="filterStatus" style="width: auto;">
+                        <option value="all">All Status</option>
+                        <option value="uploaded">Uploaded</option>
+                        <option value="classified">Classified</option>
+                        <option value="processing">Processing</option>
+                        <option value="processed">Processed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="documentsTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>File Name</th>
+                                <th>Type</th>
+                                <th>Confidence</th>
+                                <th>Size</th>
+                                <th>Status</th>
+                                <th>Uploaded</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentsBody">
+                            <!-- Documents will be loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Document Modal -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-labelledby="uploadDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadDocumentModalLabel">Upload Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadDocumentForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Upload Method</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="uploadMethod" id="uploadFile" value="file" checked>
+                            <label class="form-check-label" for="uploadFile">
+                                Upload File
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="uploadMethod" id="uploadText" value="text">
+                            <label class="form-check-label" for="uploadText">
+                                Paste Text
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="fileUploadSection">
+                        <label for="documentFile" class="form-label">Select File</label>
+                        <input class="form-control" type="file" id="documentFile" name="file" accept=".txt,.pdf,.doc,.docx">
+                        <div class="form-text">
+                            Supported formats: .txt, .pdf, .doc, .docx (max 10MB)
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 d-none" id="textUploadSection">
+                        <label for="documentText" class="form-label">Document Text</label>
+                        <textarea class="form-control" id="documentText" rows="6" 
+                                  placeholder="Paste or type document content here..."></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="autoClassify" checked>
+                        <label class="form-check-label" for="autoClassify">
+                            Auto-classify document after upload
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="uploadDocument()">Upload Document</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Document Modal -->
+<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Document Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewDocumentBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Process Document Modal -->
+<div class="modal fade" id="processDocumentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Process Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="processDocumentBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let currentDocumentId = null;
+
+// Load documents
+async function loadDocuments() {
+    try {
+        const response = await fetch('/api/v1/documents?include_relations=true&limit=100');
+        const data = await response.json();
+        
+        const tbody = document.getElementById('documentsBody');
+        tbody.innerHTML = '';
+        
+        data.items.forEach(doc => {
+            const row = document.createElement('tr');
+            
+            // Format file size
+            const fileSize = doc.file_size;
+            let sizeStr;
+            if (fileSize < 1024) {
+                sizeStr = `${fileSize} B`;
+            } else if (fileSize < 1024 * 1024) {
+                sizeStr = `${(fileSize / 1024).toFixed(1)} KB`;
+            } else {
+                sizeStr = `${(fileSize / (1024 * 1024)).toFixed(1)} MB`;
+            }
+            
+            // Format date
+            const uploaded = new Date(doc.uploaded_at);
+            const dateStr = uploaded.toLocaleDateString() + ' ' + uploaded.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Status badge
+            let statusBadge = 'secondary';
+            switch(doc.status) {
+                case 'uploaded': statusBadge = 'secondary'; break;
+                case 'classified': statusBadge = 'info'; break;
+                case 'processing': statusBadge = 'warning'; break;
+                case 'processed': statusBadge = 'success'; break;
+                case 'error': statusBadge = 'danger'; break;
+            }
+            
+            // Confidence badge
+            let confidenceBadge = '';
+            if (doc.classification_confidence !== null) {
+                const confidence = Math.round(doc.classification_confidence * 100);
+                let confidenceColor = 'secondary';
+                if (confidence >= 80) confidenceColor = 'success';
+                else if (confidence >= 60) confidenceColor = 'warning';
+                else confidenceColor = 'danger';
+                
+                confidenceBadge = `<span class="badge bg-${confidenceColor}">${confidence}%</span>`;
+            }
+            
+            row.innerHTML = `
+                <td>${doc.id}</td>
+                <td>
+                    <strong>${doc.original_filename}</strong>
+                    ${doc.mime_type ? `<br><small class="text-muted">${doc.mime_type}</small>` : ''}
+                </td>
+                <td>
+                    ${doc.document_type ? `<span class="badge bg-primary">${doc.document_type}</span>` : 'Unknown'}
+                    ${confidenceBadge}
+                </td>
+                <td>${confidenceBadge || '-'}</td>
+                <td>${sizeStr}</td>
+                <td><span class="badge bg-${statusBadge}">${doc.status}</span></td>
+                <td>${dateStr}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" 
+                                onclick="viewDocument(${doc.id})" title="View">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-success" 
+                                onclick="processDocument(${doc.id})" title="Process">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info" 
+                                onclick="classifyDocument(${doc.id})" title="Classify">
+                            <i class="fas fa-tag"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" 
+                                onclick="deleteDocument(${doc.id})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+    } catch (error) {
+        console.error('Error loading documents:', error);
+        showError('Failed to load documents');
+    }
+}
+
+// View document details
+async function viewDocument(documentId) {
+    try {
+        const response = await fetch(`/api/v1/documents/${documentId}`);
+        const doc = await response.json();
+        
+        // Create modal content
+        const modalContent = `
+            <div class="modal-header">
+                <h5 class="modal-title">${doc.original_filename}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Document Information</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">ID</dt>
+                            <dd class="col-sm-8">${doc.id}</dd>
+                            
+                            <dt class="col-sm-4">Filename</dt>
+                            <dd class="col-sm-8">${doc.original_filename}</dd>
+                            
+                            <dt class="col-sm-4">Type</dt>
+                            <dd class="col-sm-8">
+                                ${doc.document_type 
+                                    ? `<span class="badge bg-primary">${doc.document_type}</span>` 
+                                    : '<span class="badge bg-secondary">Unknown</span>'}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Confidence</dt>
+                            <dd class="col-sm-8">
+                                ${doc.classification_confidence !== null 
+                                    ? `${Math.round(doc.classification_confidence * 100)}%` 
+                                    : '-'}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Size</dt>
+                            <dd class="col-sm-8">${formatFileSize(doc.file_size)}</dd>
+                            
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-${getStatusColor(doc.status)}">${doc.status}</span>
+                            </dd>
+                            
+                            <dt class="col-sm-4">Uploaded</dt>
+                            <dd class="col-sm-8">${formatDate(doc.uploaded_at)}</dd>
+                            
+                            <dt class="col-sm-4">Processed</dt>
+                            <dd class="col-sm-8">${doc.processed_at ? formatDate(doc.processed_at) : '-'}</dd>
+                        </dl>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Content Preview</h6>
+                        <div class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                            ${doc.content 
+                                ? `<pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0;">${escapeHtml(doc.content.substring(0, 2000))}${doc.content.length > 2000 ? '...' : ''}</pre>`
+                                : '<p class="text-muted">No content available.</p>'}
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h6>Actions</h6>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-primary" onclick="processDocument(${doc.id})">
+                                    <i class="fas fa-play me-1"></i>Process
+                                </button>
+                                <button type="button" class="btn btn-sm btn-info" onclick="classifyDocument(${doc.id})">
+                                    <i class="fas fa-tag me-1"></i>Classify
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning" onclick="downloadDocument(${doc.id})">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDocument(${doc.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${doc.jobs && doc.jobs.length > 0 ? `
+                <div class="mt-4">
+                    <h6>Processing Jobs (${doc.jobs.length})</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Job ID</th>
+                                    <th>Pipeline</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${doc.jobs.map(job => `
+                                    <tr>
+                                        <td>${job.id}</td>
+                                        <td>${job.pipeline?.name || `Pipeline ${job.pipeline_id}`}</td>
+                                        <td><span class="badge bg-${getStatusColor(job.status)}">${job.status}</span></td>
+                                        <td>${formatDate(job.created_at)}</td>
+                                        <td>
+                                            <a href="/jobs/${job.id}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        `;
+        
+        // Create and show modal
+        const modalEl = document.createElement('div');
+        modalEl.className = 'modal fade';
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">${modalContent}</div>
+            </div>
+        `;
+        
+        document.body.appendChild(modalEl);
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        
+        // Clean up modal after it's hidden
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(modalEl);
+        });
+        
+    } catch (error) {
+        console.error('Error loading document details:', error);
+        showError('Failed to load document details');
+    }
+}
+
+// Upload document
+async function uploadDocument() {
+    try {
+        const uploadMethod = document.querySelector('input[name="uploadMethod"]:checked').value;
+        const autoClassify = document.getElementById('autoClassify').checked;
+        
+        let formData = new FormData();
+        
+        if (uploadMethod === 'file') {
+            const fileInput = document.getElementById('documentFile');
+            if (!fileInput.files.length) {
+                showError('Please select a file to upload');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            formData.append('file', file);
+        } else {
+            const textContent = document.getElementById('documentText').value.trim();
+            if (!textContent) {
+                showError('Please enter text content');
+                return;
+            }
+            
+            formData.append('content', textContent);
+        }
+        
+        formData.append('classify', autoClassify.toString());
+        
+        const response = await fetch('/api/v1/documents/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('uploadDocumentModal'));
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('uploadDocumentForm').reset();
+            document.getElementById('fileUploadSection').classList.remove('d-none');
+            document.getElementById('textUploadSection').classList.add('d-none');
+            
+            // Show success and reload
+            showSuccess(`Document "${result.document.original_filename}" uploaded successfully`);
+            setTimeout(() => loadDocuments(), 1000);
+            
+        } else {
+            const error = await response.json();
+            showError(`Failed to upload document: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error uploading document:', error);
+        showError('Failed to upload document');
+    }
+}
+
+// Classify document
+async function classifyDocument(documentId) {
+    try {
+        const response = await fetch(`/api/v1/documents/${documentId}/classify`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showSuccess(`Document classified as: ${result.document_type} (${Math.round(result.classification_confidence * 100)}% confidence)`);
+            loadDocuments();
+        } else {
+            const error = await response.json();
+            showError(`Failed to classify document: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error classifying document:', error);
+        showError('Failed to classify document');
+    }
+}
+
+// Process document (run through pipeline)
+async function processDocument(documentId) {
+    currentDocumentId = documentId;
+    
+    try {
+        // Get document info
+        const docResponse = await fetch(`/api/v1/documents/${documentId}`);
+        const document = await docResponse.json();
+        
+        // Get pipelines
+        const pipelineResponse = await fetch('/api/v1/pipelines');
+        const pipelines = await pipelineResponse.json();
+        
+        // Load process modal content
+        const modalBody = document.getElementById('processDocumentBody');
+        modalBody.innerHTML = `
+            <h6>Process Document: ${document.original_filename}</h6>
+            <p class="text-muted mb-3">Select a pipeline to process this document.</p>
+            
+            <div class="mb-3">
+                <label for="processPipelineId" class="form-label">Select Pipeline</label>
+                <select class="form-select" id="processPipelineId">
+                    <option value="">Select a pipeline...</option>
+                    ${pipelines.items.filter(p => p.is_active).map(p => `
+                        <option value="${p.id}">${p.name} (v${p.version})</option>
+                    `).join('')}
+                </select>
+            </div>
+            
+            ${document.document_type ? `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Document is classified as: <strong>${document.document_type}</strong>
+                (${Math.round(document.classification_confidence * 100)}% confidence)
+            </div>
+            ` : ''}
+            
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Processing will run in the background. You can check job status in the Jobs section.
+            </div>
+        `;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('processDocumentModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('Error preparing to process document:', error);
+        showError('Failed to prepare document processing');
+    }
+}
+
+// Execute document processing
+async function executeDocumentProcessing() {
+    try {
+        const pipelineId = document.getElementById('processPipelineId').value;
+        if (!pipelineId) {
+            showError('Please select a pipeline');
+            return;
+        }
+        
+        const response = await fetch(`/api/v1/pipelines/${pipelineId}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                document_id: parseInt(currentDocumentId)
+            })
+        });
+        
+        if (response.ok) {
+            const job = await response.json();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('processDocumentModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccess(`Document processing started! Job ID: ${job.id}`);
+            
+            // Redirect to job details
+            setTimeout(() => {
+                window.location.href = `/jobs/${job.id}`;
+            }, 1500);
+            
+        } else {
+            const error = await response.json();
+            showError(`Failed to process document: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error processing document:', error);
+        showError('Failed to process document');
+    }
+}
+
+// Delete document
+async function deleteDocument(documentId) {
+    if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/v1/documents/${documentId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showSuccess(result.message || 'Document deleted successfully');
+            loadDocuments();
+        } else {
+            const error = await response.json();
+            showError(`Failed to delete document: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error deleting document:', error);
+        showError('Failed to delete document');
+    }
+}
+
+// Download document (simplified - in production, would serve file)
+async function downloadDocument(documentId) {
+    try {
+        const response = await fetch(`/api/v1/documents/${documentId}`);
+        const document = await response.json();
+        
+        if (document.content) {
+            // Create download link for text content
+            const blob = new Blob([document.content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = document.original_filename || 'document.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } else {
+            showError('No content available for download');
+        }
+        
+    } catch (error) {
+        console.error('Error downloading document:', error);
+        showError('Failed to download document');
+    }
+}
+
+// Utility functions
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'completed': case 'processed': return 'success';
+        case 'running': case 'processing': return 'warning';
+        case 'pending': case 'uploaded': return 'secondary';
+        case 'failed': case 'error': return 'danger';
+        case 'classified': return 'info';
+        default: return 'secondary';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showError(message) {
+    alert('Error: ' + message); // Simplified for now
+}
+
+function showSuccess(message) {
+    alert('Success: ' + message); // Simplified for now
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadDocuments();
+    
+    // Handle upload method change
+    document.querySelectorAll('input[name="uploadMethod"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'file') {
+                document.getElementById('fileUploadSection').classList.remove('d-none');
+                document.getElementById('textUploadSection').classList.add('d-none');
+            } else {
+                document.getElementById('fileUploadSection').classList.add('d-none');
+                document.getElementById('textUploadSection').classList.remove('d-none');
+            }
+        });
+    });
+    
+    // Initialize search
+    const searchInput = document.getElementById('searchDocuments');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#documentsBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+    
+    // Initialize type filter
+    const typeFilter = document.getElementById('filterType');
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            const rows = document.querySelectorAll('#documentsBody tr');
+            
+            rows.forEach(row => {
+                if (filterValue === 'all') {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const typeCell = row.querySelector('td:nth-child(3)');
+                if (!typeCell) return;
+                
+                const hasType = typeCell.innerHTML.toLowerCase().includes(filterValue);
+                row.style.display = hasType ? '' : 'none';
+            });
+        });
+    }
+    
+    // Initialize status filter
+    const statusFilter = document.getElementById('filterStatus');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            const rows = document.querySelectorAll('#documentsBody tr');
+            
+            rows.forEach(row => {
+                if (filterValue === 'all') {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const statusCell = row.querySelector('td:nth-child(6)');
+                if (!statusCell) return;
+                
+                const hasStatus = statusCell.innerHTML.toLowerCase().includes(filterValue);
+                row.style.display = hasStatus ? '' : 'none';
+            });
+        });
+    }
+});
+
+// Export for use in inline event handlers
+window.uploadDocument = uploadDocument;
+window.viewDocument = viewDocument;
+window.processDocument = processDocument;
+window.executeDocumentProcessing = executeDocumentProcessing;
+window.classifyDocument = classifyDocument;
+window.deleteDocument = deleteDocument;
+window.downloadDocument = downloadDocument;
+</script>
+{% endblock %}

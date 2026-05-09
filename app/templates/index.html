@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block subtitle %}Overview of document processing pipelines and activities{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Active Pipelines
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-pipelines">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-project-diagram fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Processed Documents
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="processed-documents">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Total Jobs
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-jobs">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Success Rate
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="success-rate">0%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Job Status Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Job Status Overview</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" 
+                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                         aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">Time Range:</div>
+                        <a class="dropdown-item" href="#" onclick="loadStats('1d')">Last 24 Hours</a>
+                        <a class="dropdown-item" href="#" onclick="loadStats('7d')">Last 7 Days</a>
+                        <a class="dropdown-item" href="#" onclick="loadStats('30d')">Last 30 Days</a>
+                        <a class="dropdown-item" href="#" onclick="loadStats('all')">All Time</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="jobStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Pipeline -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Processing Pipeline</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <img class="img-fluid px-3 px-sm-4 mt-3 mb-4" 
+                         src="https://img.icons8.com/color/96/000000/process.png" 
+                         alt="Processing Pipeline">
+                </div>
+                <p class="mb-3">
+                    Documents flow through the pipeline: classification, extraction, 
+                    validation, transformation, and routing.
+                </p>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Classification:</strong> Auto-detect document type
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Extraction:</strong> Extract fields with multiple strategies
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Validation:</strong> Apply business rules and schema validation
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Transformation:</strong> Map and convert field formats
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Routing:</strong> Send data to destinations (CSV, JSON, SQLite, Webhooks)
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Jobs Table -->
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Jobs</h6>
+                <a href="/jobs" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="recentJobsTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Pipeline</th>
+                                <th>Document</th>
+                                <th>Status</th>
+                                <th>Started</th>
+                                <th>Duration</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentJobsBody">
+                            <!-- Jobs will be loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="/pipelines/new" class="btn btn-primary btn-block">
+                            <i class="fas fa-plus me-2"></i>Create Pipeline
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/documents/upload" class="btn btn-success btn-block">
+                            <i class="fas fa-upload me-2"></i>Upload Document
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/pipelines" class="btn btn-info btn-block">
+                            <i class="fas fa-project-diagram me-2"></i>Manage Pipelines
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/connectors" class="btn btn-warning btn-block">
+                            <i class="fas fa-plug me-2"></i>Configure Connectors
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let jobStatusChart = null;
+
+// Load dashboard statistics
+async function loadStats(timeRange = '7d') {
+    try {
+        const response = await fetch(`/api/v1/dashboard/stats?time_range=${timeRange}`);
+        const data = await response.json();
+        
+        // Update statistics cards
+        document.getElementById('active-pipelines').textContent = data.active_pipelines;
+        document.getElementById('processed-documents').textContent = data.total_documents;
+        document.getElementById('total-jobs').textContent = data.total_jobs;
+        document.getElementById('success-rate').textContent = `${(data.success_rate * 100).toFixed(1)}%`;
+        
+        // Update job status chart
+        updateJobStatusChart(data.jobs_by_status);
+        
+        // Load recent jobs
+        await loadRecentJobs();
+        
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+        showError('Failed to load dashboard statistics');
+    }
+}
+
+// Update job status chart
+function updateJobStatusChart(jobsByStatus) {
+    const ctx = document.getElementById('jobStatusChart').getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (jobStatusChart) {
+        jobStatusChart.destroy();
+    }
+    
+    // Prepare data
+    const labels = Object.keys(jobsByStatus);
+    const data = Object.values(jobsByStatus);
+    const backgroundColors = labels.map(status => {
+        switch(status) {
+            case 'completed': return '#28a745';
+            case 'running': return '#007bff';
+            case 'pending': return '#6c757d';
+            case 'failed': return '#dc3545';
+            default: return '#ffc107';
+        }
+    });
+    
+    // Create chart
+    jobStatusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.raw} jobs`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Load recent jobs
+async function loadRecentJobs() {
+    try {
+        const response = await fetch('/api/v1/jobs?limit=10&include_relations=true');
+        const data = await response.json();
+        
+        const tbody = document.getElementById('recentJobsBody');
+        tbody.innerHTML = '';
+        
+        data.items.forEach(job => {
+            const row = document.createElement('tr');
+            
+            // Determine status badge color
+            let badgeClass = 'badge-secondary';
+            switch(job.status) {
+                case 'completed': badgeClass = 'badge-success'; break;
+                case 'running': badgeClass = 'badge-primary'; break;
+                case 'pending': badgeClass = 'badge-warning'; break;
+                case 'failed': badgeClass = 'badge-danger'; break;
+            }
+            
+            // Calculate duration
+            let duration = '-';
+            if (job.started_at && job.completed_at) {
+                const start = new Date(job.started_at);
+                const end = new Date(job.completed_at);
+                const diffMs = end - start;
+                duration = `${Math.round(diffMs / 1000)}s`;
+            }
+            
+            row.innerHTML = `
+                <td>${job.id}</td>
+                <td>${job.pipeline?.name || `Pipeline ${job.pipeline_id}`}</td>
+                <td>${job.document?.original_filename || `Document ${job.document_id}`}</td>
+                <td><span class="badge ${badgeClass}">${job.status}</span></td>
+                <td>${formatDate(job.created_at)}</td>
+                <td>${duration}</td>
+                <td>
+                    <a href="/jobs/${job.id}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+    } catch (error) {
+        console.error('Error loading recent jobs:', error);
+        showError('Failed to load recent jobs');
+    }
+}
+
+// Format date for display
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+}
+
+// Show error message
+function showError(message) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed bottom-0 end-0 m-3';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-exclamation-circle me-2"></i>${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                    data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Show toast
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Remove toast after it's hidden
+    toast.addEventListener('hidden.bs.toast', function () {
+        document.body.removeChild(toast);
+    });
+}
+
+// Initialize dashboard when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial statistics
+    loadStats('7d');
+    
+    // Set up auto-refresh every 30 seconds
+    setInterval(() => loadStats('7d'), 30000);
+});
+</script>
+{% endblock %}

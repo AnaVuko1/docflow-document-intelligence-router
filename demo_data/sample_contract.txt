@@ -1,0 +1,60 @@
+SERVICE AGREEMENT
+
+This Service Agreement ("Agreement") is entered into as of the Effective Date
+by and between:
+
+Party A: CloudBase Solutions LLC
+         200 Innovation Drive, Suite 300
+         Austin, TX 78701
+         ("Provider")
+
+Party B: RetailMax Corporation
+         4500 Commerce Parkway
+         Dallas, TX 75201
+         ("Client")
+
+1. SERVICES
+Provider agrees to deliver cloud infrastructure migration services as
+described in Exhibit A, attached hereto.
+
+2. TERM
+Effective Date: 01/01/2026
+Expiration Date: 12/31/2026
+This Agreement shall automatically renew for successive one-year terms
+unless either party provides 30 days written notice.
+
+3. FEES AND PAYMENT
+Contract Value: $85,000.00
+Payment Schedule: Monthly installments of $7,083.33 due on the 1st of
+each month.
+
+4. PAYMENT TERMS
+Payment Terms: Net 15 days from invoice date. Late payments accrue
+interest at 1.5% per month.
+
+5. CONFIDENTIALITY
+Both parties agree to maintain confidentiality of all proprietary
+information exchanged during the term of this Agreement and for a
+period of 3 years thereafter.
+
+6. TERMINATION
+Either party may terminate this Agreement with 60 days written notice.
+In the event of material breach, the non-breaching party may terminate
+immediately upon written notice.
+
+7. GOVERNING LAW
+Governing Law: State of Texas
+Jurisdiction: Travis County, Texas
+
+8. INDEMNIFICATION
+Each party agrees to indemnify and hold harmless the other party against
+any third-party claims arising from the indemnifying party's negligence
+or willful misconduct.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the
+Effective Date.
+
+_________________________              _________________________
+CloudBase Solutions LLC                 RetailMax Corporation
+By: John Smith, CEO                     By: Sarah Johnson, COO
+Date: 01/01/2026                        Date: 01/01/2026

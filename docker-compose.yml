@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  docflow:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=sqlite+aiosqlite:///./docflow.db
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+      - docflow_data:/app/data
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  docflow_data:

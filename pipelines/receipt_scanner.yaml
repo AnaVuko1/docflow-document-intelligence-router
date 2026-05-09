@@ -1,0 +1,58 @@
+name: "Receipt Scanner Pipeline"
+description: "Extract receipt data: merchant, date, total, payment method, tax"
+version: 1
+steps:
+  - type: classify
+    config:
+      target_types: [receipt, invoice]
+
+  - type: extract
+    config:
+      strategy: regex
+      fields:
+        - name: merchant
+          pattern: "(?:Merchant|Store|Shop|Business)\\s*(?:Name)?\\s*[:]\\s*(.+)"
+        - name: receipt_number
+          pattern: "(?:Receipt\\s*#?|Transaction\\s*#?|Order\\s*#?)\\s*([A-Z0-9\\-]+)"
+        - name: date
+          pattern: "(?:Date|Purchase\\s*Date|Transaction\\s*Date)\\s*[:]\\s*(\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4})"
+          required: true
+        - name: total
+          pattern: "(?:Total|Amount|Grand\\s*Total)\\s*[:]\\s*\\$?\\s*([\\d,]+\\.?\\d{0,2})"
+          required: true
+        - name: tax
+          pattern: "(?:Tax|VAT|Sales\\s*Tax)\\s*(?:\\(?\\d+%?\\)?)?\\s*[:$]\\s*([\\d,]+\\.?\\d{0,2})"
+        - name: payment_method
+          pattern: "(?:Payment\\s*Method|Paid\\s*By|Card\\s*Type)\\s*[:]\\s*(.+)"
+        - name: subtotal
+          pattern: "(?:Subtotal|Net)\\s*[:$]\\s*([\\d,]+\\.?\\d{0,2})"
+
+  - type: validate
+    config:
+      rules:
+        - field: total
+          rule: "required"
+        - field: total
+          rule: "min(0.01)"
+        - field: date
+          rule: "required"
+
+  - type: transform
+    config:
+      mappings:
+        receipt_number: "receipt_id"
+        total: "amount"
+      formats:
+        amount: "float"
+        tax: "float"
+        subtotal: "float"
+        date: "date(%m/%d/%Y)"
+
+  - type: route
+    config:
+      destinations:
+        - type: csv
+          filename: "receipts_export.csv"
+        - type: json
+        - type: sqlite
+          table: "processed_receipts"

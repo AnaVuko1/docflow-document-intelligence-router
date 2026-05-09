@@ -1,0 +1,483 @@
+/* DocFlow - Custom CSS Styles */
+
+/* Custom Variables */
+:root {
+    --docflow-primary: #4361ee;
+    --docflow-secondary: #3a0ca3;
+    --docflow-success: #4cc9f0;
+    --docflow-info: #7209b7;
+    --docflow-warning: #f72585;
+    --docflow-danger: #b5179e;
+    --docflow-light: #f8f9fa;
+    --docflow-dark: #212529;
+}
+
+/* Custom Button Styles */
+.btn-primary {
+    background-color: var(--docflow-primary);
+    border-color: var(--docflow-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--docflow-secondary);
+    border-color: var(--docflow-secondary);
+}
+
+.btn-success {
+    background-color: var(--docflow-success);
+    border-color: var(--docflow-success);
+}
+
+.btn-info {
+    background-color: var(--docflow-info);
+    border-color: var(--docflow-info);
+}
+
+.btn-warning {
+    background-color: var(--docflow-warning);
+    border-color: var(--docflow-warning);
+}
+
+.btn-danger {
+    background-color: var(--docflow-danger);
+    border-color: var(--docflow-danger);
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.2);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: var(--docflow-light);
+    border-bottom: 1px solid #e3e6f0;
+    padding: 0.75rem 1.25rem;
+}
+
+/* Table Styles */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--docflow-dark);
+}
+
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    border-top: none;
+    background-color: var(--docflow-light);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(67, 97, 238, 0.05);
+}
+
+/* Badge Styles */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+.badge.bg-primary {
+    background-color: var(--docflow-primary) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--docflow-success) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--docflow-info) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--docflow-warning) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--docflow-danger) !important;
+}
+
+/* Progress Bar Styles */
+.progress {
+    background-color: #eaecf4;
+    border-radius: 0.35rem;
+    height: 1rem;
+}
+
+.progress-bar {
+    background-color: var(--docflow-primary);
+    border-radius: 0.35rem;
+}
+
+/* Navbar Styles */
+.navbar {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    padding: 0.75rem 1.5rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.nav-link {
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--docflow-primary) !important;
+}
+
+.nav-link.active {
+    color: var(--docflow-primary) !important;
+    font-weight: 600;
+}
+
+/* Accordion Styles */
+.accordion-button:not(.collapsed) {
+    background-color: rgba(67, 97, 238, 0.1);
+    color: var(--docflow-primary);
+}
+
+.accordion-button:focus {
+    border-color: var(--docflow-primary);
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+}
+
+/* Form Styles */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--docflow-primary);
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--docflow-dark);
+}
+
+/* Modal Styles */
+.modal-content {
+    border: none;
+    box-shadow: 0 0.5rem 2rem rgba(58, 59, 69, 0.3);
+}
+
+.modal-header {
+    background-color: var(--docflow-light);
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.modal-footer {
+    background-color: var(--docflow-light);
+    border-top: 1px solid #e3e6f0;
+}
+
+/* Alert Styles */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.alert-primary {
+    background-color: rgba(67, 97, 238, 0.1);
+    color: var(--docflow-primary);
+    border-left: 4px solid var(--docflow-primary);
+}
+
+.alert-success {
+    background-color: rgba(76, 201, 240, 0.1);
+    color: #0c5460;
+    border-left: 4px solid var(--docflow-success);
+}
+
+.alert-info {
+    background-color: rgba(114, 9, 183, 0.1);
+    color: var(--docflow-info);
+    border-left: 4px solid var(--docflow-info);
+}
+
+.alert-warning {
+    background-color: rgba(247, 37, 133, 0.1);
+    color: #856404;
+    border-left: 4px solid var(--docflow-warning);
+}
+
+.alert-danger {
+    background-color: rgba(181, 23, 158, 0.1);
+    color: #721c24;
+    border-left: 4px solid var(--docflow-danger);
+}
+
+/* Custom Utility Classes */
+.text-docflow-primary {
+    color: var(--docflow-primary) !important;
+}
+
+.text-docflow-secondary {
+    color: var(--docflow-secondary) !important;
+}
+
+.bg-docflow-primary {
+    background-color: var(--docflow-primary) !important;
+}
+
+.bg-docflow-secondary {
+    background-color: var(--docflow-secondary) !important;
+}
+
+/* Pipeline Step Visualization */
+.pipeline-step {
+    position: relative;
+    padding: 1rem;
+    background: white;
+    border: 2px solid #e3e6f0;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.pipeline-step:hover {
+    border-color: var(--docflow-primary);
+    box-shadow: 0 0.5rem 1rem rgba(67, 97, 238, 0.15);
+}
+
+.pipeline-step.completed {
+    border-color: var(--docflow-success);
+    background-color: rgba(76, 201, 240, 0.05);
+}
+
+.pipeline-step.running {
+    border-color: var(--docflow-primary);
+    background-color: rgba(67, 97, 238, 0.05);
+    animation: pulse 2s infinite;
+}
+
+.pipeline-step.failed {
+    border-color: var(--docflow-danger);
+    background-color: rgba(181, 23, 158, 0.05);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(67, 97, 238, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
+    }
+}
+
+/* Job Status Timeline */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #e3e6f0;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: #e3e6f0;
+    border: 2px solid white;
+}
+
+.timeline-item.completed::before {
+    background-color: var(--docflow-success);
+}
+
+.timeline-item.running::before {
+    background-color: var(--docflow-primary);
+    animation: pulse 2s infinite;
+}
+
+.timeline-item.failed::before {
+    background-color: var(--docflow-danger);
+}
+
+/* Code Block Styles */
+pre {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.875em;
+    line-height: 1.6;
+    overflow-x: auto;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.875em;
+}
+
+/* File Upload Styles */
+.file-drop-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.5rem;
+    padding: 3rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.file-drop-area:hover {
+    border-color: var(--docflow-primary);
+    background-color: rgba(67, 97, 238, 0.05);
+}
+
+.file-drop-area.dragover {
+    border-color: var(--docflow-success);
+    background-color: rgba(76, 201, 240, 0.1);
+}
+
+/* Stat Card Styles */
+.stat-card {
+    background: linear-gradient(135deg, var(--docflow-primary), var(--docflow-secondary));
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+.stat-card .stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.stat-card .stat-label {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --docflow-light: #2d3748;
+        --docflow-dark: #f7fafc;
+    }
+    
+    body {
+        background-color: #1a202c;
+        color: #e2e8f0;
+    }
+    
+    .card {
+        background-color: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .card-header {
+        background-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .table {
+        color: #e2e8f0;
+    }
+    
+    .table th {
+        background-color: #4a5568;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #4a5568;
+    }
+    
+    pre, code {
+        background-color: #4a5568;
+        color: #e2e8f0;
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .navbar,
+    .footer,
+    .btn,
+    .modal,
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+    
+    .table {
+        border: 1px solid #dee2e6;
+    }
+    
+    a {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+}

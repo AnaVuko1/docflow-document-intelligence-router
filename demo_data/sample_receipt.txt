@@ -1,0 +1,53 @@
+                      RETAIL STORE RECEIPT
+                 ====================================
+
+Store: Electronics Plus
+       789 Tech Drive
+       San Jose, CA 95123
+       Tel: (408) 555-0199
+
+Receipt #: RCPT-20260315-8842
+Transaction #: TXN-8842
+Date: 03/15/2026
+Time: 14:32:45
+Cashier: Maria G.
+
+----------------------------------------
+ITEMS PURCHASED:
+----------------------------------------
+
+1. Wireless Noise-Cancelling Headphones
+   SKU: WH-1000XM5
+   $349.99
+
+2. USB-C Hub 7-in-1 Adapter
+   SKU: USB-HUB7
+   $49.99
+
+3. 65W GaN USB-C Charger
+   SKU: CHG-65G
+   $39.99
+
+4. HDMI Cable 2.1 (6ft)
+   SKU: HDMI-6FT
+   $19.99
+
+----------------------------------------
+Subtotal:      $459.96
+Tax (9.25%):   $42.55
+Total:         $502.51
+----------------------------------------
+
+Payment Method: Visa Credit Card
+Card Type: Visa
+Card Ending: 4242
+
+----------------------------------------
+Items: 4
+
+RETURN POLICY:
+Items may be returned within 30 days with
+original receipt and packaging.
+
+Thank you for shopping at Electronics Plus!
+====================================

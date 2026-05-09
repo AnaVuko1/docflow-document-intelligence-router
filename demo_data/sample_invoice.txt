@@ -1,0 +1,42 @@
+INVOICE #INV-2026-0042
+
+From: TechSupply Inc.
+    1234 Industrial Blvd, Suite 500
+    San Francisco, CA 94107
+
+Bill To: Acme Corporation
+    5678 Market Street
+    San Jose, CA 95113
+
+Invoice Date: 03/15/2026
+Due Date: 04/14/2026
+Payment Terms: Net 30
+
+----------------------------------------
+Line Items:
+
+1. Enterprise Software License (Annual)
+   Qty: 5   Unit Price: $2,400.00   Amount: $12,000.00
+
+2. Implementation Services
+   Qty: 40h   Rate: $150.00/h   Amount: $6,000.00
+
+3. Training & Onboarding Package
+   Qty: 1   Unit Price: $2,500.00   Amount: $2,500.00
+
+4. Premium Support Plan (12 months)
+   Qty: 1   Unit Price: $3,600.00   Amount: $3,600.00
+
+----------------------------------------
+Subtotal: $24,100.00
+Tax (8.5%): $2,048.50
+Total Due: $26,148.50
+
+Payment Instructions:
+Bank Transfer to TechSupply Inc.
+Account #: 9876543210
+Routing #: 021000021
+Reference: INV-2026-0042
+
+Thank you for your business.
+Questions? Contact billing@techsupply.com

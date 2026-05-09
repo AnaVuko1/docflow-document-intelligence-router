@@ -1,0 +1,66 @@
+name: "Contract Intelligence Pipeline"
+description: "Extract key contract metadata: parties, dates, value, governing law"
+version: 1
+steps:
+  - type: classify
+    config:
+      target_types: [contract]
+
+  - type: extract
+    config:
+      strategy: regex
+      fields:
+        - name: party_a
+          pattern: "(?:Party\\s*A|First\\s*Party|Provider|Service\\s*Provider)\\s*[:\\-]\\s*(.+)"
+          required: true
+        - name: party_b
+          pattern: "(?:Party\\s*B|Second\\s*Party|Client|Customer)\\s*[:\\-]\\s*(.+)"
+          required: true
+        - name: effective_date
+          pattern: "(?:Effective\\s*Date|Commencement\\s*Date|Start\\s*Date)\\s*[:]\\s*(\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4})"
+          required: true
+        - name: expiration_date
+          pattern: "(?:Expiration\\s*Date|End\\s*Date|Termination\\s*Date)\\s*[:]\\s*(\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4})"
+        - name: contract_value
+          pattern: "(?:Contract\\s*Value|Total\\s*Value|Consideration|Fee)\\s*[:$]\\s*([\\d,]+\\.?\\d{0,2})"
+        - name: governing_law
+          pattern: "(?:Governing\\s*Law|Jurisdiction)\\s*[:]\\s*(.+)"
+        - name: contract_title
+          pattern: "(?:Agreement|Contract)\\s*(?:Title|Name)?\\s*[:\\-]\\s*(.+)"
+        - name: payment_terms
+          pattern: "(?:Payment\\s*Terms|Payment\\s*Schedule)\\s*[:]\\s*(.+)"
+
+  - type: validate
+    config:
+      rules:
+        - field: party_a
+          rule: "required"
+        - field: party_b
+          rule: "required"
+        - field: effective_date
+          rule: "required"
+        - field: contract_value
+          rule: "min(0.01)"
+
+  - type: transform
+    config:
+      mappings:
+        party_a: "provider"
+        party_b: "client"
+        effective_date: "start_date"
+        expiration_date: "end_date"
+        contract_value: "value"
+        contract_title: "title"
+      formats:
+        value: "float"
+        effective_date: "date(%m/%d/%Y)"
+        expiration_date: "date(%m/%d/%Y)"
+
+  - type: route
+    config:
+      destinations:
+        - type: csv
+          filename: "contracts_export.csv"
+        - type: json
+        - type: sqlite
+          table: "processed_contracts"

@@ -1,0 +1,1205 @@
+{% extends "base.html" %}
+
+{% block title %}Pipelines{% endblock %}
+{% block subtitle %}Define, manage, and execute document processing pipelines{% endblock %}
+
+{% block header_actions %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPipelineModal">
+    <i class="fas fa-plus me-2"></i>New Pipeline
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Pipeline Definitions</h6>
+                <div class="d-flex">
+                    <input type="text" class="form-control form-control-sm me-2" id="searchPipelines" 
+                           placeholder="Search pipelines...">
+                    <select class="form-select form-select-sm" id="filterStatus" style="width: auto;">
+                        <option value="all">All Status</option>
+                        <option value="active">Active Only</option>
+                        <option value="inactive">Inactive Only</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="pipelinesTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Version</th>
+                                <th>Steps</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pipelinesBody">
+                            <!-- Pipelines will be loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pre-built Pipelines -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Pre-built Pipeline Templates</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Invoice Processing Pipeline -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+                                    Invoice Processing
+                                </h5>
+                                <p class="card-text">
+                                    Extract and validate invoice data including invoice numbers, dates, line items, and totals.
+                                </p>
+                                <ul class="list-unstyled mb-3">
+                                    <li><i class="fas fa-check text-success me-2"></i>Classify invoice documents</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Extract 8+ invoice fields</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Validate business rules</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Route to CSV/SQLite</li>
+                                </ul>
+                                <button class="btn btn-outline-primary btn-sm" onclick="loadTemplate('invoice')">
+                                    <i class="fas fa-download me-1"></i>Load Template
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="createFromTemplate('invoice')">
+                                    <i class="fas fa-plus me-1"></i>Create Pipeline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contract Intelligence Pipeline -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-file-contract text-success me-2"></i>
+                                    Contract Intelligence
+                                </h5>
+                                <p class="card-text">
+                                    Extract key information from contracts including parties, dates, values, and terms.
+                                </p>
+                                <ul class="list-unstyled mb-3">
+                                    <li><i class="fas fa-check text-success me-2"></i>Classify contract documents</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Extract 6+ contract fields</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Validate date ranges</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Route to JSON/webhook</li>
+                                </ul>
+                                <button class="btn btn-outline-success btn-sm" onclick="loadTemplate('contract')">
+                                    <i class="fas fa-download me-1"></i>Load Template
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="createFromTemplate('contract')">
+                                    <i class="fas fa-plus me-1"></i>Create Pipeline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Receipt Scanner Pipeline -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-receipt text-warning me-2"></i>
+                                    Receipt Scanner
+                                </h5>
+                                <p class="card-text">
+                                    Process receipts to extract merchant information, dates, totals, and payment methods.
+                                </p>
+                                <ul class="list-unstyled mb-3">
+                                    <li><i class="fas fa-check text-success me-2"></i>Classify receipt documents</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Extract 5+ receipt fields</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Validate amounts</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Route to multiple outputs</li>
+                                </ul>
+                                <button class="btn btn-outline-warning btn-sm" onclick="loadTemplate('receipt')">
+                                    <i class="fas fa-download me-1"></i>Load Template
+                                </button>
+                                <button class="btn btn-warning btn-sm" onclick="createFromTemplate('receipt')">
+                                    <i class="fas fa-plus me-1"></i>Create Pipeline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Pipeline Modal -->
+<div class="modal fade" id="createPipelineModal" tabindex="-1" aria-labelledby="createPipelineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPipelineModalLabel">Create New Pipeline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createPipelineForm">
+                    <div class="mb-3">
+                        <label for="pipelineName" class="form-label">Pipeline Name *</label>
+                        <input type="text" class="form-control" id="pipelineName" required
+                               placeholder="e.g., Invoice Processing Pipeline">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pipelineDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="pipelineDescription" rows="2"
+                                  placeholder="Describe what this pipeline does..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Template</label>
+                        <div class="form-text mb-2">Start with a pre-built template or create from scratch:</div>
+                        <div class="row">
+                            <div class="col-4">
+                                <button type="button" class="btn btn-outline-secondary w-100" onclick="loadEmptyTemplate()">
+                                    <i class="fas fa-file me-2"></i>Empty
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button type="button" class="btn btn-outline-primary w-100" onclick="loadBasicTemplate()">
+                                    <i class="fas fa-cube me-2"></i>Basic
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button type="button" class="btn btn-outline-info w-100" onclick="loadAdvancedTemplate()">
+                                    <i class="fas fa-rocket me-2"></i>Advanced
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pipelineYaml" class="form-label">Pipeline Definition (YAML) *</label>
+                        <div class="form-text mb-2">
+                            Define your pipeline steps in YAML format. Use the templates above as examples.
+                        </div>
+                        <div id="pipelineEditor" style="height: 400px; border: 1px solid #ddd; border-radius: 4px;"></div>
+                        <textarea class="form-control d-none" id="pipelineYaml" rows="10" required></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="pipelineActive" checked>
+                        <label class="form-check-label" for="pipelineActive">
+                            Activate pipeline immediately
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createPipeline()">Create Pipeline</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Pipeline Modal -->
+<div class="modal fade" id="editPipelineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Pipeline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="editPipelineBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Run Pipeline Modal -->
+<div class="modal fade" id="runPipelineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Run Pipeline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="runPipelineBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- YAML Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.2/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.2/mode-yaml.js"></script>
+
+<script>
+// Global variables
+let aceEditor = null;
+let currentPipelineId = null;
+
+// Initialize Ace Editor
+function initAceEditor() {
+    const editorEl = document.getElementById('pipelineEditor');
+    if (editorEl && !aceEditor) {
+        aceEditor = ace.edit('pipelineEditor');
+        aceEditor.setTheme('ace/theme/chrome');
+        aceEditor.session.setMode('ace/mode/yaml');
+        aceEditor.setOptions({
+            fontSize: '14px',
+            showPrintMargin: false,
+            highlightActiveLine: true,
+            maxLines: Infinity
+        });
+        
+        // Sync with textarea
+        aceEditor.session.on('change', function() {
+            document.getElementById('pipelineYaml').value = aceEditor.getValue();
+        });
+    }
+}
+
+// Load pipelines
+async function loadPipelines() {
+    try {
+        const response = await fetch('/api/v1/pipelines');
+        const data = await response.json();
+        
+        const tbody = document.getElementById('pipelinesBody');
+        tbody.innerHTML = '';
+        
+        data.items.forEach(pipeline => {
+            const row = document.createElement('tr');
+            
+            // Count steps
+            const stepCount = pipeline.definition?.steps?.length || 0;
+            
+            // Format date
+            const updated = new Date(pipeline.updated_at || pipeline.created_at);
+            const dateStr = updated.toLocaleDateString() + ' ' + updated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            row.innerHTML = `
+                <td>${pipeline.id}</td>
+                <td>
+                    <strong>${pipeline.name}</strong>
+                    ${pipeline.version > 1 ? `<span class="badge bg-secondary ms-1">v${pipeline.version}</span>` : ''}
+                </td>
+                <td>${pipeline.description || '-'}</td>
+                <td>${pipeline.version}</td>
+                <td>${stepCount} step${stepCount !== 1 ? 's' : ''}</td>
+                <td>
+                    ${pipeline.is_active 
+                        ? '<span class="badge bg-success">Active</span>' 
+                        : '<span class="badge bg-secondary">Inactive</span>'}
+                </td>
+                <td>${dateStr}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" 
+                                onclick="showPipelineDetails(${pipeline.id})" title="View">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-success" 
+                                onclick="runPipeline(${pipeline.id})" title="Run">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" 
+                                onclick="editPipeline(${pipeline.id})" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" 
+                                onclick="deletePipeline(${pipeline.id})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+    } catch (error) {
+        console.error('Error loading pipelines:', error);
+        showError('Failed to load pipelines');
+    }
+}
+
+// Show pipeline details
+async function showPipelineDetails(pipelineId) {
+    try {
+        const response = await fetch(`/api/v1/pipelines/${pipelineId}`);
+        const pipeline = await response.json();
+        
+        // Create modal content
+        const modalContent = `
+            <div class="modal-header">
+                <h5 class="modal-title">${pipeline.name}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <h6>Description</h6>
+                    <p>${pipeline.description || 'No description provided.'}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Pipeline Definition</h6>
+                    <div class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                        <pre><code class="language-yaml">${JSON.stringify(pipeline.definition, null, 2)}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Metadata</h6>
+                    <dl class="row">
+                        <dt class="col-sm-3">ID</dt>
+                        <dd class="col-sm-9">${pipeline.id}</dd>
+                        
+                        <dt class="col-sm-3">Version</dt>
+                        <dd class="col-sm-9">${pipeline.version}</dd>
+                        
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9">
+                            ${pipeline.is_active 
+                                ? '<span class="badge bg-success">Active</span>' 
+                                : '<span class="badge bg-secondary">Inactive</span>'}
+                        </dd>
+                        
+                        <dt class="col-sm-3">Created</dt>
+                        <dd class="col-sm-9">${new Date(pipeline.created_at).toLocaleString()}</dd>
+                        
+                        <dt class="col-sm-3">Updated</dt>
+                        <dd class="col-sm-9">${new Date(pipeline.updated_at).toLocaleString()}</dd>
+                    </dl>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Pipeline Steps (${pipeline.definition?.steps?.length || 0})</h6>
+                    <div class="list-group">
+                        ${(pipeline.definition?.steps || []).map((step, index) => `
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Step ${index + 1}: ${step.type}</h6>
+                                    <small>${step.name || 'Unnamed'}</small>
+                                </div>
+                                <p class="mb-1">Type: ${step.type}</p>
+                                <small>Config: ${JSON.stringify(step.config, null, 2)}</small>
+                            </div>
+                        `).join('') || '<p class="text-muted">No steps defined.</p>'}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editPipeline(${pipelineId})">Edit Pipeline</button>
+            </div>
+        `;
+        
+        // Create and show modal
+        const modalEl = document.createElement('div');
+        modalEl.className = 'modal fade';
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">${modalContent}</div>
+            </div>
+        `;
+        
+        document.body.appendChild(modalEl);
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        
+        // Clean up modal after it's hidden
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(modalEl);
+        });
+        
+    } catch (error) {
+        console.error('Error loading pipeline details:', error);
+        showError('Failed to load pipeline details');
+    }
+}
+
+// Run pipeline
+async function runPipeline(pipelineId) {
+    currentPipelineId = pipelineId;
+    
+    // Get pipeline info
+    try {
+        const response = await fetch(`/api/v1/pipelines/${pipelineId}`);
+        const pipeline = await response.json();
+        
+        // Load run modal content
+        const modalBody = document.getElementById('runPipelineBody');
+        modalBody.innerHTML = `
+            <h6>Run Pipeline: ${pipeline.name}</h6>
+            <p class="text-muted mb-3">Select a document or provide text content to process.</p>
+            
+            <form id="runPipelineForm">
+                <div class="mb-3">
+                    <label class="form-label">Input Source</label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="inputSource" id="inputDocument" value="document" checked>
+                        <label class="form-check-label" for="inputDocument">
+                            Use Existing Document
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="inputSource" id="inputText" value="text">
+                        <label class="form-check-label" for="inputText">
+                            Enter Text Content
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3" id="documentSelection">
+                    <label for="documentId" class="form-label">Select Document</label>
+                    <select class="form-select" id="documentId">
+                        <option value="">Loading documents...</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3 d-none" id="textContentSection">
+                    <label for="contentText" class="form-label">Text Content</label>
+                    <textarea class="form-control" id="contentText" rows="6" 
+                              placeholder="Paste or type document content here..."></textarea>
+                </div>
+            </form>
+            
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle me-2"></i>
+                The pipeline will run in the background. You can check job status in the Jobs section.
+            </div>
+        `;
+        
+        // Load documents
+        await loadDocumentsForPipeline();
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('runPipelineModal'));
+        modal.show();
+        
+        // Handle input source change
+        document.querySelectorAll('input[name="inputSource"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'document') {
+                    document.getElementById('documentSelection').classList.remove('d-none');
+                    document.getElementById('textContentSection').classList.add('d-none');
+                } else {
+                    document.getElementById('documentSelection').classList.add('d-none');
+                    document.getElementById('textContentSection').classList.remove('d-none');
+                }
+            });
+        });
+        
+    } catch (error) {
+        console.error('Error preparing to run pipeline:', error);
+        showError('Failed to prepare pipeline run');
+    }
+}
+
+// Load documents for pipeline run
+async function loadDocumentsForPipeline() {
+    try {
+        const response = await fetch('/api/v1/documents?limit=100');
+        const data = await response.json();
+        
+        const select = document.getElementById('documentId');
+        select.innerHTML = '<option value="">Select a document...</option>';
+        
+        data.items.forEach(doc => {
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = `${doc.original_filename} (${doc.document_type || 'unknown'})`;
+            select.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('Error loading documents:', error);
+        document.getElementById('documentId').innerHTML = '<option value="">Error loading documents</option>';
+    }
+}
+
+// Execute pipeline run
+async function executePipelineRun() {
+    try {
+        const inputSource = document.querySelector('input[name="inputSource"]:checked').value;
+        let requestData = { pipeline_id: currentPipelineId };
+        
+        if (inputSource === 'document') {
+            const documentId = document.getElementById('documentId').value;
+            if (!documentId) {
+                showError('Please select a document');
+                return;
+            }
+            requestData.document_id = parseInt(documentId);
+        } else {
+            const content = document.getElementById('contentText').value.trim();
+            if (!content) {
+                showError('Please enter text content');
+                return;
+            }
+            requestData.content = content;
+        }
+        
+        // Submit run request
+        const response = await fetch(`/api/v1/pipelines/${currentPipelineId}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (response.ok) {
+            const job = await response.json();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('runPipelineModal'));
+            modal.hide();
+            
+            // Show success message
+            showSuccess(`Pipeline job started! Job ID: ${job.id}`);
+            
+            // Redirect to job details
+            setTimeout(() => {
+                window.location.href = `/jobs/${job.id}`;
+            }, 1500);
+            
+        } else {
+            const error = await response.json();
+            showError(`Failed to run pipeline: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error running pipeline:', error);
+        showError('Failed to run pipeline');
+    }
+}
+
+// Edit pipeline
+async function editPipeline(pipelineId) {
+    try {
+        const response = await fetch(`/api/v1/pipelines/${pipelineId}`);
+        const pipeline = await response.json();
+        
+        // Load edit modal content
+        const editBody = document.getElementById('editPipelineBody');
+        editBody.innerHTML = `
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Pipeline: ${pipeline.name}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPipelineForm">
+                    <div class="mb-3">
+                        <label for="editPipelineName" class="form-label">Pipeline Name</label>
+                        <input type="text" class="form-control" id="editPipelineName" 
+                               value="${pipeline.name}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPipelineDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editPipelineDescription" rows="2">${pipeline.description || ''}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPipelineYaml" class="form-label">Pipeline Definition (YAML)</label>
+                        <div id="editPipelineEditor" style="height: 400px; border: 1px solid #ddd; border-radius: 4px;"></div>
+                        <textarea class="form-control d-none" id="editPipelineYaml" rows="10" required>${JSON.stringify(pipeline.definition, null, 2)}</textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="editPipelineActive" ${pipeline.is_active ? 'checked' : ''}>
+                        <label class="form-check-label" for="editPipelineActive">
+                            Pipeline is active
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updatePipeline(${pipelineId})">Update Pipeline</button>
+            </div>
+        `;
+        
+        // Initialize YAML editor for edit modal
+        setTimeout(() => {
+            const editEditorEl = document.getElementById('editPipelineEditor');
+            if (editEditorEl) {
+                const editEditor = ace.edit('editPipelineEditor');
+                editEditor.setTheme('ace/theme/chrome');
+                editEditor.session.setMode('ace/mode/yaml');
+                editEditor.setOptions({
+                    fontSize: '14px',
+                    showPrintMargin: false,
+                    highlightActiveLine: true,
+                    maxLines: Infinity
+                });
+                editEditor.setValue(JSON.stringify(pipeline.definition, null, 2));
+                
+                // Sync with textarea
+                editEditor.session.on('change', function() {
+                    document.getElementById('editPipelineYaml').value = editEditor.getValue();
+                });
+            }
+        }, 100);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('editPipelineModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('Error loading pipeline for edit:', error);
+        showError('Failed to load pipeline for editing');
+    }
+}
+
+// Update pipeline
+async function updatePipeline(pipelineId) {
+    try {
+        const name = document.getElementById('editPipelineName').value.trim();
+        const description = document.getElementById('editPipelineDescription').value.trim();
+        const yamlText = document.getElementById('editPipelineYaml').value.trim();
+        const isActive = document.getElementById('editPipelineActive').checked;
+        
+        if (!name) {
+            showError('Pipeline name is required');
+            return;
+        }
+        
+        let definition;
+        try {
+            definition = JSON.parse(yamlText);
+        } catch (e) {
+            showError('Invalid JSON in pipeline definition');
+            return;
+        }
+        
+        const updateData = {
+            name: name,
+            description: description || null,
+            definition: definition,
+            is_active: isActive
+        };
+        
+        const response = await fetch(`/api/v1/pipelines/${pipelineId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (response.ok) {
+            const updatedPipeline = await response.json();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editPipelineModal'));
+            modal.hide();
+            
+            // Show success and reload
+            showSuccess(`Pipeline "${updatedPipeline.name}" updated successfully`);
+            setTimeout(() => loadPipelines(), 1000);
+            
+        } else {
+            const error = await response.json();
+            showError(`Failed to update pipeline: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error updating pipeline:', error);
+        showError('Failed to update pipeline');
+    }
+}
+
+// Delete pipeline
+async function deletePipeline(pipelineId) {
+    if (!confirm('Are you sure you want to delete this pipeline? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/v1/pipelines/${pipelineId}?soft_delete=true`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showSuccess('Pipeline deleted successfully');
+            loadPipelines();
+        } else {
+            const error = await response.json();
+            showError(`Failed to delete pipeline: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error deleting pipeline:', error);
+        showError('Failed to delete pipeline');
+    }
+}
+
+// Templates
+function loadEmptyTemplate() {
+    const emptyTemplate = `name: "New Pipeline"
+description: "Describe your pipeline here"
+steps: []
+`;
+    aceEditor.setValue(emptyTemplate);
+}
+
+function loadBasicTemplate() {
+    const basicTemplate = `name: "Basic Document Processor"
+description: "Classify and extract basic fields from documents"
+steps:
+  - type: classify
+    config:
+      target_types: [invoice, receipt, contract, generic]
+  
+  - type: extract
+    config:
+      strategy: regex
+      fields:
+        - name: date
+          pattern: "Date\\s*[:]?\\s*(\\\\d{1,2}[/-]\\\\d{1,2}[/-]\\\\d{2,4})"
+        
+        - name: total
+          pattern: "Total\\s*[:$]?\\s*([\\\\d,]+\\\\.?\\\\d{0,2})"
+`;
+    aceEditor.setValue(basicTemplate);
+}
+
+function loadAdvancedTemplate() {
+    const advancedTemplate = `name: "Advanced Invoice Processor"
+description: "Complete invoice processing with validation and routing"
+steps:
+  - type: classify
+    name: "Document Classification"
+    config:
+      target_types: [invoice, receipt]
+  
+  - type: extract
+    name: "Field Extraction"
+    config:
+      strategy: regex
+      fields:
+        - name: invoice_number
+          pattern: "Invoice\\\\s*#?\\\\s*([A-Z0-9-]+)"
+          required: true
+        
+        - name: date
+          pattern: "Date\\\\s*[:]?\\\\s*(\\\\d{1,2}[/-]\\\\d{1,2}[/-]\\\\d{2,4})"
+        
+        - name: total_amount
+          pattern: "Total\\\\s*[:$]?\\\\s*([\\\\d,]+\\\\.\\\\d{2})"
+          required: true
+  
+  - type: validate
+    name: "Data Validation"
+    config:
+      rules:
+        - field: total_amount
+          rule: "value > 0"
+          message: "Total amount must be positive"
+        
+        - field: invoice_number
+          rule: "len(value) >= 3"
+          message: "Invoice number must be at least 3 characters"
+  
+  - type: transform
+    name: "Data Transformation"
+    config:
+      mappings:
+        invoice_number: "invoice_id"
+        total_amount: "amount"
+      
+      formats:
+        - field: amount
+          format: float
+        
+        - field: date
+          format: date
+          params:
+            output_format: "%Y-%m-%d"
+  
+  - type: route
+    name: "Output Routing"
+    config:
+      destinations:
+        - type: csv
+          filename: "invoices_export.csv"
+        
+        - type: sqlite
+          table: "processed_invoices"
+`;
+    aceEditor.setValue(advancedTemplate);
+}
+
+// Load pre-built templates
+async function loadTemplate(templateName) {
+    try {
+        const response = await fetch(`/templates/${templateName}.yaml`);
+        if (response.ok) {
+            const yamlContent = await response.text();
+            aceEditor.setValue(yamlContent);
+            showSuccess(`${templateName} template loaded`);
+        } else {
+            showError(`Template "${templateName}" not found`);
+        }
+    } catch (error) {
+        console.error(`Error loading template ${templateName}:`, error);
+        showError(`Failed to load ${templateName} template`);
+    }
+}
+
+// Create pipeline from template
+async function createFromTemplate(templateName) {
+    try {
+        // For now, we'll use a simplified approach
+        // In a real implementation, you would load the template from the server
+        const templates = {
+            invoice: `name: "Invoice Processing Pipeline"
+description: "Extract and validate invoice data"
+steps:
+  - type: classify
+    config:
+      target_types: [invoice]
+  
+  - type: extract
+    config:
+      strategy: regex
+      fields:
+        - name: invoice_number
+          pattern: "Invoice\\\\s*#?\\\\s*([A-Z0-9-]+)"
+        
+        - name: date
+          pattern: "Date\\\\s*[:]?\\\\s*(\\\\d{1,2}[/-]\\\\d{1,2}[/-]\\\\d{2,4})"
+        
+        - name: total_amount
+          pattern: "Total\\\\s*[:$]?\\\\s*([\\\\d,]+\\\\.\\\\d{2})"
+        
+        - name: vendor_name
+          pattern: "Vendor\\\\s*[:]?\\\\s*(.+)"
+        
+        - name: due_date
+          pattern: "Due\\\\s+Date\\\\s*[:]?\\\\s*(\\\\d{1,2}[/-]\\\\d{1,2}[/-]\\\\d{2,4})"
+  
+  - type: validate
+    config:
+      rules:
+        - field: total_amount
+          rule: "value > 0"
+        
+        - field: invoice_number
+          rule: "len(value) >= 3"
+  
+  - type: transform
+    config:
+      mappings:
+        invoice_number: "invoice_id"
+        total_amount: "amount"
+        vendor_name: "vendor"
+      
+      formats:
+        - field: amount
+          format: float
+        
+        - field: date
+          format: date
+          params:
+            output_format: "%Y-%m-%d"
+        
+        - field: due_date
+          format: date
+          params:
+            output_format: "%Y-%m-%d"
+  
+  - type: route
+    config:
+      destinations:
+        - type: csv
+          filename: "invoices.csv"
+        
+        - type: sqlite
+          table: "processed_invoices"`,
+            
+            contract: `name: "Contract Intelligence Pipeline"
+description: "Extract key information from contracts"
+steps:
+  - type: classify
+    config:
+      target_types: [contract]
+  
+  - type: extract
+    config:
+      strategy: regex
+      fields:
+        - name: parties
+          pattern: "Party\\\\s+A\\\\s*[:]?\\\\s*(.+)"
+          multiple: true
+        
+        - name: effective_date
+          pattern: "Effective\\\\s+Date\\\\s*[:]?\\\\s*(\\\\d{1,2}[/-]\\\\d{1,2}[/-]\\\\d{2,4})"
+        
+        - name: expiration_date
+          pattern: "Expiration\\\\s+Date\\\\s*[:]?\\\\s*(\\\\d{1,2}[/-]\\\\d{1,2}[/-]\\\\d{2,4})"
+        
+        - name: contract_value
+          pattern: "Contract\\\\s+Value\\\\s*[:$]?\\\\s*([\\\\d,]+\\\\.\\\\d{2})"
+  
+  - type: validate
+    config:
+      rules:
+        - field: effective_date
+          rule: "required"
+        
+        - field: expiration_date
+          rule: "required"
+      
+      cross_field_rules:
+        - "parse_date(expiration_date) > parse_date(effective_date)"
+  
+  - type: transform
+    config:
+      formats:
+        - field: contract_value
+          format: float
+        
+        - field: effective_date
+          format: date
+          params:
+            output_format: "%Y-%m-%d"
+        
+        - field: expiration_date
+          format: date
+          params:
+            output_format: "%Y-%m-%d"
+  
+  - type: route
+    config:
+      destinations:
+        - type: json
+          filename: "contracts.json"
+        
+        - type: webhook
+          url: "https://api.example.com/contracts"
+          headers:
+            Content-Type: "application/json"`,
+            
+            receipt: `name: "Receipt Scanner Pipeline"
+description: "Process receipts to extract key information"
+steps:
+  - type: classify
+    config:
+      target_types: [receipt]
+  
+  - type: extract
+    config:
+      strategy: regex
+      fields:
+        - name: merchant
+          pattern: "Merchant\\\\s*[:]?\\\\s*(.+)"
+        
+        - name: date
+          pattern: "Date\\\\s*[:]?\\\\s*(\\\\d{1,2}[/-]\\\\d{1,2}[/-]\\\\d{2,4})"
+        
+        - name: total
+          pattern: "Total\\\\s*[:$]?\\\\s*([\\\\d,]+\\\\.\\\\d{2})"
+        
+        - name: payment_method
+          pattern: "Payment\\\\s+Method\\\\s*[:]?\\\\s*(.+)"
+        
+        - name: tax
+          pattern: "Tax\\\\s*[:$]?\\\\s*([\\\\d,]+\\\\.\\\\d{2})"
+  
+  - type: validate
+    config:
+      rules:
+        - field: total
+          rule: "value > 0"
+        
+        - field: merchant
+          rule: "required"
+        
+        - field: date
+          rule: "required"
+  
+  - type: transform
+    config:
+      formats:
+        - field: total
+          format: float
+        
+        - field: tax
+          format: float
+        
+        - field: date
+          format: date
+          params:
+            output_format: "%Y-%m-%d"
+  
+  - type: route
+    config:
+      destinations:
+        - type: csv
+          filename: "receipts.csv"
+          delimiter: ","
+        
+        - type: json
+          filename: "receipts.json"`
+        };
+        
+        aceEditor.setValue(templates[templateName] || '');
+        showSuccess(`${templateName} template loaded`);
+        
+    } catch (error) {
+        console.error(`Error loading template ${templateName}:`, error);
+        showError(`Failed to load ${templateName} template`);
+    }
+}
+
+// Create pipeline
+async function createPipeline() {
+    try {
+        const name = document.getElementById('pipelineName').value.trim();
+        const description = document.getElementById('pipelineDescription').value.trim();
+        const yamlText = document.getElementById('pipelineYaml').value.trim();
+        const isActive = document.getElementById('pipelineActive').checked;
+        
+        if (!name) {
+            showError('Pipeline name is required');
+            return;
+        }
+        
+        if (!yamlText) {
+            showError('Pipeline definition is required');
+            return;
+        }
+        
+        let definition;
+        try {
+            definition = yamlText;
+            // Try to parse as YAML
+            definition = jsyaml.load(yamlText);
+        } catch (e) {
+            showError('Invalid YAML in pipeline definition: ' + e.message);
+            return;
+        }
+        
+        const pipelineData = {
+            name: name,
+            description: description || null,
+            definition: definition,
+            is_active: isActive
+        };
+        
+        const response = await fetch('/api/v1/pipelines', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pipelineData)
+        });
+        
+        if (response.ok) {
+            const newPipeline = await response.json();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createPipelineModal'));
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('createPipelineForm').reset();
+            aceEditor.setValue('');
+            
+            // Show success and reload
+            showSuccess(`Pipeline "${newPipeline.name}" created successfully`);
+            setTimeout(() => loadPipelines(), 1000);
+            
+        } else {
+            const error = await response.json();
+            showError(`Failed to create pipeline: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error creating pipeline:', error);
+        showError('Failed to create pipeline');
+    }
+}
+
+// Utility functions
+function showError(message) {
+    alert('Error: ' + message); // Simplified for now
+}
+
+function showSuccess(message) {
+    alert('Success: ' + message); // Simplified for now
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initAceEditor();
+    loadPipelines();
+    
+    // Initialize search
+    const searchInput = document.getElementById('searchPipelines');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#pipelinesBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+    
+    // Initialize status filter
+    const statusFilter = document.getElementById('filterStatus');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            const rows = document.querySelectorAll('#pipelinesBody tr');
+            
+            rows.forEach(row => {
+                const statusCell = row.querySelector('td:nth-child(6)');
+                if (!statusCell) return;
+                
+                const isActive = statusCell.innerHTML.includes('Active');
+                
+                let showRow = true;
+                if (filterValue === 'active') {
+                    showRow = isActive;
+                } else if (filterValue === 'inactive') {
+                    showRow = !isActive;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        });
+    }
+});
+
+// Export for use in inline event handlers
+window.loadTemplate = loadTemplate;
+window.createFromTemplate = createFromTemplate;
+window.loadEmptyTemplate = loadEmptyTemplate;
+window.loadBasicTemplate = loadBasicTemplate;
+window.loadAdvancedTemplate = loadAdvancedTemplate;
+window.createPipeline = createPipeline;
+window.showPipelineDetails = showPipelineDetails;
+window.runPipeline = runPipeline;
+window.editPipeline = editPipeline;
+window.deletePipeline = deletePipeline;
+</script>
+{% endblock %}

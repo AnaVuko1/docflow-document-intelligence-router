@@ -1,0 +1,981 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs{% endblock %}
+{% block subtitle %}Track and manage document processing jobs{% endblock %}
+
+{% block header_actions %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickJobModal">
+    <i class="fas fa-bolt me-2"></i>Quick Job
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Processing Jobs</h6>
+                <div class="d-flex">
+                    <input type="text" class="form-control form-control-sm me-2" id="searchJobs" 
+                           placeholder="Search jobs...">
+                    <select class="form-select form-select-sm me-2" id="filterStatus" style="width: auto;">
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="running">Running</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="filterPipeline" style="width: auto;">
+                        <option value="all">All Pipelines</option>
+                        <!-- Pipelines loaded via JavaScript -->
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="jobsTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Pipeline</th>
+                                <th>Document</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                                <th>Started</th>
+                                <th>Duration</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobsBody">
+                            <!-- Jobs will be loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Active Jobs
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeJobs">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-sync-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Completed Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="completedToday">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Avg. Processing Time
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgProcessingTime">0s</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Failure Rate
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="failureRate">0%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Details Modal -->
+<div class="modal fade" id="jobDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Job Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="jobDetailsBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Job Modal -->
+<div class="modal fade" id="quickJobModal" tabindex="-1" aria-labelledby="quickJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickJobModalLabel">Quick Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickJobForm">
+                    <div class="mb-3">
+                        <label for="quickPipeline" class="form-label">Pipeline *</label>
+                        <select class="form-select" id="quickPipeline" required>
+                            <option value="">Select a pipeline...</option>
+                            <!-- Pipelines loaded via JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Input Source</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="quickInputSource" id="quickDocument" value="document" checked>
+                            <label class="form-check-label" for="quickDocument">
+                                Existing Document
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="quickInputSource" id="quickText" value="text">
+                            <label class="form-check-label" for="quickText">
+                                Paste Text
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="quickDocumentSection">
+                        <label for="quickDocumentId" class="form-label">Select Document</label>
+                        <select class="form-select" id="quickDocumentId">
+                            <option value="">Loading documents...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 d-none" id="quickTextSection">
+                        <label for="quickTextContent" class="form-label">Text Content</label>
+                        <textarea class="form-control" id="quickTextContent" rows="4" 
+                                  placeholder="Paste or type document content here..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createQuickJob()">Create Job</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Job Results Modal -->
+<div class="modal fade" id="jobResultsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Job Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="jobResultsBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let autoRefreshInterval = null;
+
+// Load jobs
+async function loadJobs() {
+    try {
+        const response = await fetch('/api/v1/jobs?include_relations=true&limit=100');
+        const data = await response.json();
+        
+        const tbody = document.getElementById('jobsBody');
+        tbody.innerHTML = '';
+        
+        let activeCount = 0;
+        let completedToday = 0;
+        let totalDuration = 0;
+        let durationCount = 0;
+        let failedCount = 0;
+        const today = new Date().toDateString();
+        
+        data.items.forEach(job => {
+            const row = document.createElement('tr');
+            
+            // Determine status badge color
+            let badgeClass = 'secondary';
+            switch(job.status) {
+                case 'completed': badgeClass = 'success'; break;
+                case 'running': badgeClass = 'primary'; activeCount++; break;
+                case 'pending': badgeClass = 'warning'; activeCount++; break;
+                case 'failed': badgeClass = 'danger'; failedCount++; break;
+            }
+            
+            // Count completions today
+            if (job.status === 'completed' && job.completed_at) {
+                const completedDate = new Date(job.completed_at).toDateString();
+                if (completedDate === today) {
+                    completedToday++;
+                }
+            }
+            
+            // Calculate duration
+            let duration = '-';
+            let durationSeconds = 0;
+            if (job.started_at && job.completed_at) {
+                const start = new Date(job.started_at);
+                const end = new Date(job.completed_at);
+                const diffMs = end - start;
+                durationSeconds = diffMs / 1000;
+                duration = `${Math.round(durationSeconds)}s`;
+                
+                if (job.status === 'completed') {
+                    totalDuration += durationSeconds;
+                    durationCount++;
+                }
+            }
+            
+            // Format dates
+            const started = job.started_at ? formatDate(job.started_at) : '-';
+            const created = formatDate(job.created_at);
+            
+            row.innerHTML = `
+                <td>${job.id}</td>
+                <td>${job.pipeline?.name || `Pipeline ${job.pipeline_id}`}</td>
+                <td>
+                    ${job.document?.original_filename || `Document ${job.document_id}`}
+                    ${job.document?.document_type ? `<br><small class="text-muted">${job.document.document_type}</small>` : ''}
+                </td>
+                <td><span class="badge bg-${badgeClass}">${job.status}</span></td>
+                <td>
+                    ${job.status === 'running' || job.status === 'completed' ? `
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${badgeClass}" role="progressbar" 
+                             style="width: ${job.progress || 0}%" 
+                             aria-valuenow="${job.progress || 0}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            ${job.progress || 0}%
+                        </div>
+                    </div>
+                    ` : '-'}
+                </td>
+                <td>${started}</td>
+                <td>${duration}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" 
+                                onclick="viewJob(${job.id})" title="View">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${job.status === 'failed' ? `
+                        <button type="button" class="btn btn-outline-warning" 
+                                onclick="retryJob(${job.id})" title="Retry">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        ` : ''}
+                        <button type="button" class="btn btn-outline-danger" 
+                                onclick="deleteJob(${job.id})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+        // Update statistics
+        document.getElementById('activeJobs').textContent = activeCount;
+        document.getElementById('completedToday').textContent = completedToday;
+        
+        const avgDuration = durationCount > 0 ? Math.round(totalDuration / durationCount) : 0;
+        document.getElementById('avgProcessingTime').textContent = `${avgDuration}s`;
+        
+        const totalJobs = data.items.length;
+        const failureRate = totalJobs > 0 ? Math.round((failedCount / totalJobs) * 100) : 0;
+        document.getElementById('failureRate').textContent = `${failureRate}%`;
+        
+    } catch (error) {
+        console.error('Error loading jobs:', error);
+        showError('Failed to load jobs');
+    }
+}
+
+// Load pipelines for filters
+async function loadPipelinesForFilter() {
+    try {
+        const response = await fetch('/api/v1/pipelines?active_only=true');
+        const data = await response.json();
+        
+        const filterSelect = document.getElementById('filterPipeline');
+        const quickSelect = document.getElementById('quickPipeline');
+        
+        // Clear existing options except first
+        while (filterSelect.options.length > 1) filterSelect.remove(1);
+        while (quickSelect.options.length > 1) quickSelect.remove(1);
+        
+        // Add pipeline options
+        data.items.forEach(pipeline => {
+            const filterOption = document.createElement('option');
+            filterOption.value = pipeline.id;
+            filterOption.textContent = pipeline.name;
+            filterSelect.appendChild(filterOption);
+            
+            const quickOption = document.createElement('option');
+            quickOption.value = pipeline.id;
+            quickOption.textContent = pipeline.name;
+            quickSelect.appendChild(quickOption);
+        });
+        
+    } catch (error) {
+        console.error('Error loading pipelines for filter:', error);
+    }
+}
+
+// Load documents for quick job
+async function loadDocumentsForQuickJob() {
+    try {
+        const response = await fetch('/api/v1/documents?limit=50');
+        const data = await response.json();
+        
+        const select = document.getElementById('quickDocumentId');
+        select.innerHTML = '<option value="">Select a document...</option>';
+        
+        data.items.forEach(doc => {
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = `${doc.original_filename} (${doc.document_type || 'unknown'})`;
+            select.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('Error loading documents:', error);
+        document.getElementById('quickDocumentId').innerHTML = '<option value="">Error loading documents</option>';
+    }
+}
+
+// View job details
+async function viewJob(jobId) {
+    try {
+        const response = await fetch(`/api/v1/jobs/${jobId}?include_relations=true`);
+        const job = await response.json();
+        
+        // Get job results
+        const resultsResponse = await fetch(`/api/v1/jobs/${jobId}/results`);
+        const results = await resultsResponse.json();
+        
+        // Get connector logs
+        const logsResponse = await fetch(`/api/v1/jobs/${jobId}/connector-logs`);
+        const logs = await logsResponse.json();
+        
+        // Create modal content
+        let modalContent = `
+            <div class="modal-header">
+                <h5 class="modal-title">Job ${job.id}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Job Information</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">ID</dt>
+                            <dd class="col-sm-8">${job.id}</dd>
+                            
+                            <dt class="col-sm-4">Status</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-${getJobStatusColor(job.status)}">${job.status}</span>
+                                ${job.retry_count > 0 ? `<span class="badge bg-warning ms-1">Retry ${job.retry_count}</span>` : ''}
+                            </dd>
+                            
+                            <dt class="col-sm-4">Pipeline</dt>
+                            <dd class="col-sm-8">
+                                <a href="/pipelines/${job.pipeline_id}" class="text-decoration-none">
+                                    ${job.pipeline?.name || `Pipeline ${job.pipeline_id}`}
+                                </a>
+                            </dd>
+                            
+                            <dt class="col-sm-4">Document</dt>
+                            <dd class="col-sm-8">
+                                <a href="/documents/${job.document_id}" class="text-decoration-none">
+                                    ${job.document?.original_filename || `Document ${job.document_id}`}
+                                </a>
+                            </dd>
+                            
+                            <dt class="col-sm-4">Progress</dt>
+                            <dd class="col-sm-8">
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-${getJobStatusColor(job.status)}" 
+                                         style="width: ${job.progress || 0}%">
+                                        ${job.progress || 0}%
+                                    </div>
+                                </div>
+                            </dd>
+                        </dl>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Timing</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">Created</dt>
+                            <dd class="col-sm-8">${formatDate(job.created_at)}</dd>
+                            
+                            <dt class="col-sm-4">Started</dt>
+                            <dd class="col-sm-8">${job.started_at ? formatDate(job.started_at) : '-'}</dd>
+                            
+                            <dt class="col-sm-4">Completed</dt>
+                            <dd class="col-sm-8">${job.completed_at ? formatDate(job.completed_at) : '-'}</dd>
+                            
+                            ${job.started_at && job.completed_at ? `
+                            <dt class="col-sm-4">Duration</dt>
+                            <dd class="col-sm-8">
+                                ${calculateDuration(job.started_at, job.completed_at)}
+                            </dd>
+                            ` : ''}
+                            
+                            <dt class="col-sm-4">Current Step</dt>
+                            <dd class="col-sm-8">${job.current_step || '-'}</dd>
+                        </dl>
+                    </div>
+                </div>
+        `;
+        
+        // Add error section if failed
+        if (job.status === 'failed' && job.error_message) {
+            modalContent += `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Job Failed</h6>
+                    <p class="mb-0"><strong>Error:</strong> ${job.error_message}</p>
+                    ${job.error_details ? `<pre class="mt-2 mb-0" style="font-size: 0.8em;">${JSON.stringify(job.error_details, null, 2)}</pre>` : ''}
+                </div>
+            `;
+        }
+        
+        // Add extracted data section
+        if (job.extracted_data && Object.keys(job.extracted_data).length > 0) {
+            modalContent += `
+                <div class="mb-4">
+                    <h6>Extracted Data</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(job.extracted_data).map(([key, value]) => `
+                                    <tr>
+                                        <td><strong>${key}</strong></td>
+                                        <td>${typeof value === 'object' ? JSON.stringify(value) : value}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Add results section
+        if (results && results.length > 0) {
+            modalContent += `
+                <div class="mb-4">
+                    <h6>Step Results (${results.length})</h6>
+                    <div class="accordion" id="resultsAccordion">
+                        ${results.map((result, index) => `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="resultHeading${index}">
+                                    <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" 
+                                            type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#resultCollapse${index}">
+                                        <i class="fas fa-${result.success ? 'check-circle text-success' : 'times-circle text-danger'} me-2"></i>
+                                        ${result.step_name || result.step_type} (${result.execution_time_ms || 0}ms)
+                                    </button>
+                                </h2>
+                                <div id="resultCollapse${index}" 
+                                     class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" 
+                                     data-bs-parent="#resultsAccordion">
+                                    <div class="accordion-body">
+                                        <dl class="row">
+                                            <dt class="col-sm-3">Step Type</dt>
+                                            <dd class="col-sm-9">${result.step_type}</dd>
+                                            
+                                            <dt class="col-sm-3">Success</dt>
+                                            <dd class="col-sm-9">
+                                                ${result.success 
+                                                    ? '<span class="badge bg-success">Yes</span>' 
+                                                    : '<span class="badge bg-danger">No</span>'}
+                                            </dd>
+                                            
+                                            <dt class="col-sm-3">Duration</dt>
+                                            <dd class="col-sm-9">${result.execution_time_ms || 0}ms</dd>
+                                            
+                                            ${result.error_message ? `
+                                            <dt class="col-sm-3">Error</dt>
+                                            <dd class="col-sm-9">
+                                                <div class="alert alert-danger py-2 mb-0">
+                                                    ${result.error_message}
+                                                </div>
+                                            </dd>
+                                            ` : ''}
+                                            
+                                            ${result.output_data ? `
+                                            <dt class="col-sm-3">Output</dt>
+                                            <dd class="col-sm-9">
+                                                <pre style="font-size: 0.8em; max-height: 200px; overflow-y: auto;">${JSON.stringify(result.output_data, null, 2)}</pre>
+                                            </dd>
+                                            ` : ''}
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Add connector logs section
+        if (logs && logs.length > 0) {
+            modalContent += `
+                <div class="mb-4">
+                    <h6>Connector Logs (${logs.length})</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Success</th>
+                                    <th>Output Path</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${logs.map(log => `
+                                    <tr>
+                                        <td>${log.connector_type}</td>
+                                        <td>
+                                            ${log.success 
+                                                ? '<span class="badge bg-success">Yes</span>' 
+                                                : '<span class="badge bg-danger">No</span>'}
+                                        </td>
+                                        <td>${log.output_path || '-'}</td>
+                                        <td>${formatDate(log.executed_at)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        modalContent += `
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    ${job.status === 'failed' ? `
+                    <button type="button" class="btn btn-warning" onclick="retryJob(${job.id})">
+                        <i class="fas fa-redo me-1"></i>Retry Job
+                    </button>
+                    ` : ''}
+                    <button type="button" class="btn btn-danger" onclick="deleteJob(${job.id})">
+                        <i class="fas fa-trash me-1"></i>Delete Job
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Create and show modal
+        const modalEl = document.createElement('div');
+        modalEl.className = 'modal fade';
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">${modalContent}</div>
+            </div>
+        `;
+        
+        document.body.appendChild(modalEl);
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        
+        // Clean up modal after it's hidden
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(modalEl);
+        });
+        
+    } catch (error) {
+        console.error('Error loading job details:', error);
+        showError('Failed to load job details');
+    }
+}
+
+// View job results
+async function viewJobResults(jobId) {
+    try {
+        const response = await fetch(`/api/v1/jobs/${jobId}/results`);
+        const results = await response.json();
+        
+        // Create modal content
+        const modalBody = document.getElementById('jobResultsBody');
+        modalBody.innerHTML = `
+            <h6>Job ${jobId} Results</h6>
+            ${results.length === 0 ? `
+                <p class="text-muted">No results available for this job.</p>
+            ` : `
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Step Type</th>
+                                <th>Step Name</th>
+                                <th>Success</th>
+                                <th>Duration</th>
+                                <th>Error</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results.map(result => `
+                                <tr>
+                                    <td>${result.step_type}</td>
+                                    <td>${result.step_name || '-'}</td>
+                                    <td>
+                                        ${result.success 
+                                            ? '<span class="badge bg-success">Yes</span>' 
+                                            : '<span class="badge bg-danger">No</span>'}
+                                    </td>
+                                    <td>${result.execution_time_ms || 0}ms</td>
+                                    <td>${result.error_message || '-'}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-info" 
+                                                onclick="viewStepResult(${jobId}, ${result.id})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `}
+        `;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('jobResultsModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('Error loading job results:', error);
+        showError('Failed to load job results');
+    }
+}
+
+// Create quick job
+async function createQuickJob() {
+    try {
+        const pipelineId = document.getElementById('quickPipeline').value;
+        const inputSource = document.querySelector('input[name="quickInputSource"]:checked').value;
+        
+        if (!pipelineId) {
+            showError('Please select a pipeline');
+            return;
+        }
+        
+        let requestData = {};
+        
+        if (inputSource === 'document') {
+            const documentId = document.getElementById('quickDocumentId').value;
+            if (!documentId) {
+                showError('Please select a document');
+                return;
+            }
+            requestData.document_id = parseInt(documentId);
+        } else {
+            const content = document.getElementById('quickTextContent').value.trim();
+            if (!content) {
+                showError('Please enter text content');
+                return;
+            }
+            requestData.content = content;
+        }
+        
+        const response = await fetch(`/api/v1/pipelines/${pipelineId}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (response.ok) {
+            const job = await response.json();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('quickJobModal'));
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('quickJobForm').reset();
+            document.getElementById('quickDocumentSection').classList.remove('d-none');
+            document.getElementById('quickTextSection').classList.add('d-none');
+            
+            // Show success message
+            showSuccess(`Quick job created! Job ID: ${job.id}`);
+            
+            // Redirect to job details
+            setTimeout(() => {
+                window.location.href = `/jobs/${job.id}`;
+            }, 1500);
+            
+        } else {
+            const error = await response.json();
+            showError(`Failed to create job: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error creating quick job:', error);
+        showError('Failed to create quick job');
+    }
+}
+
+// Retry job
+async function retryJob(jobId) {
+    try {
+        const response = await fetch(`/api/v1/jobs/${jobId}/retry`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const newJob = await response.json();
+            showSuccess(`Job retry started! New job ID: ${newJob.id}`);
+            loadJobs();
+        } else {
+            const error = await response.json();
+            showError(`Failed to retry job: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error retrying job:', error);
+        showError('Failed to retry job');
+    }
+}
+
+// Delete job
+async function deleteJob(jobId) {
+    if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/v1/jobs/${jobId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showSuccess(result.message || 'Job deleted successfully');
+            loadJobs();
+        } else {
+            const error = await response.json();
+            showError(`Failed to delete job: ${error.detail}`);
+        }
+        
+    } catch (error) {
+        console.error('Error deleting job:', error);
+        showError('Failed to delete job');
+    }
+}
+
+// Utility functions
+function getJobStatusColor(status) {
+    switch(status) {
+        case 'completed': return 'success';
+        case 'running': return 'primary';
+        case 'pending': return 'warning';
+        case 'failed': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function calculateDuration(startString, endString) {
+    if (!startString || !endString) return '-';
+    
+    const start = new Date(startString);
+    const end = new Date(endString);
+    const diffMs = end - start;
+    
+    const seconds = Math.floor(diffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+    } else {
+        return `${seconds}s`;
+    }
+}
+
+function showError(message) {
+    alert('Error: ' + message); // Simplified for now
+}
+
+function showSuccess(message) {
+    alert('Success: ' + message); // Simplified for now
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadJobs();
+    loadPipelinesForFilter();
+    loadDocumentsForQuickJob();
+    
+    // Set up auto-refresh for active jobs
+    autoRefreshInterval = setInterval(() => {
+        loadJobs();
+    }, 10000); // Refresh every 10 seconds
+    
+    // Initialize search
+    const searchInput = document.getElementById('searchJobs');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#jobsBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+    
+    // Initialize status filter
+    const statusFilter = document.getElementById('filterStatus');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            const rows = document.querySelectorAll('#jobsBody tr');
+            
+            rows.forEach(row => {
+                if (filterValue === 'all') {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const statusCell = row.querySelector('td:nth-child(4)');
+                if (!statusCell) return;
+                
+                const hasStatus = statusCell.innerHTML.toLowerCase().includes(filterValue);
+                row.style.display = hasStatus ? '' : 'none';
+            });
+        });
+    }
+    
+    // Initialize pipeline filter
+    const pipelineFilter = document.getElementById('filterPipeline');
+    if (pipelineFilter) {
+        pipelineFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            const rows = document.querySelectorAll('#jobsBody tr');
+            
+            rows.forEach(row => {
+                if (filterValue === 'all') {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const pipelineCell = row.querySelector('td:nth-child(2)');
+                if (!pipelineCell) return;
+                
+                const pipelineIdMatch = pipelineCell.innerHTML.match(/Pipeline\s+(\d+)/);
+                const cellText = pipelineCell.textContent.toLowerCase();
+                const filterText = this.options[this.selectedIndex].text.toLowerCase();
+                
+                let showRow = false;
+                if (pipelineIdMatch && pipelineIdMatch[1] === filterValue) {
+                    showRow = true;
+                } else if (cellText.includes(filterText)) {
+                    showRow = true;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        });
+    }
+    
+    // Handle quick job input source change
+    document.querySelectorAll('input[name="quickInputSource"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'document') {
+                document.getElementById('quickDocumentSection').classList.remove('d-none');
+                document.getElementById('quickTextSection').classList.add('d-none');
+            } else {
+                document.getElementById('quickDocumentSection').classList.add('d-none');
+                document.getElementById('quickTextSection').classList.remove('d-none');
+            }
+        });
+    });
+    
+    // Clean up interval when page unloads
+    window.addEventListener('beforeunload', function() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+    });
+});
+
+// Export for use in inline event handlers
+window.viewJob = viewJob;
+window.viewJobResults = viewJobResults;
+window.createQuickJob = createQuickJob;
+window.retryJob = retryJob;
+window.deleteJob = deleteJob;
+</script>
+{% endblock %}

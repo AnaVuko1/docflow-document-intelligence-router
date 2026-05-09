@@ -1,0 +1,69 @@
+name: "Invoice Processing Pipeline"
+description: "Extract and validate invoice data with line items, tax, and totals"
+version: 1
+steps:
+  - type: classify
+    config:
+      target_types: [invoice, receipt]
+
+  - type: extract
+    config:
+      strategy: regex
+      fields:
+        - name: invoice_number
+          pattern: "Invoice\\s*#?\\s*([A-Z0-9\\-]+)"
+          required: true
+        - name: vendor_name
+          pattern: "(?:From|Vendor|Company)\\s*[:]\\s*(.+)"
+        - name: bill_to
+          pattern: "(?:Bill\\s*To|Customer|Client)\\s*[:]\\s*(.+)"
+        - name: date
+          pattern: "(?:Invoice\\s*)?Date\\s*[:]\\s*(\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4})"
+          required: true
+        - name: due_date
+          pattern: "(?:Due\\s*Date|Payment\\s*Due)\\s*[:]\\s*(\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4})"
+        - name: subtotal
+          pattern: "(?:Subtotal|Net\\s*Amount)\\s*[:$]\\s*([\\d,]+\\.?\\d{0,2})"
+        - name: tax
+          pattern: "(?:Tax|VAT|GST|HST)\\s*(?:\\(?\\d+%\\)?)?\\s*[:$]\\s*([\\d,]+\\.?\\d{0,2})"
+        - name: total_amount
+          pattern: "(?:Total|Total\\s*Due|Amount\\s*Due|Grand\\s*Total)\\s*[:]\\s*\\$?\\s*([\\d,]+\\.?\\d{0,2})"
+          required: true
+
+  - type: validate
+    config:
+      rules:
+        - field: total_amount
+          rule: "required"
+        - field: total_amount
+          rule: "min(0.01)"
+        - field: invoice_number
+          rule: "required"
+        - field: invoice_number
+          rule: "min_length(3)"
+        - field: date
+          rule: "required"
+
+  - type: transform
+    config:
+      mappings:
+        invoice_number: "invoice_id"
+        vendor_name: "vendor"
+        bill_to: "customer"
+        total_amount: "amount"
+        subtotal: "net_amount"
+      formats:
+        amount: "float"
+        net_amount: "float"
+        tax: "float"
+        date: "date(%m/%d/%Y)"
+        due_date: "date(%m/%d/%Y)"
+
+  - type: route
+    config:
+      destinations:
+        - type: csv
+          filename: "invoices_export.csv"
+        - type: json
+        - type: sqlite
+          table: "processed_invoices"
